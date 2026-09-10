@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Mighty Fish: 海底英語大冒險 (ESL 3D 拼讀闖關遊戲)</title>
+  <link rel="stylesheet" href="css/style.css">
+  <meta name="description" content="結合 Karim Maaloul 3D Mighty Fish 與 P1 美語教材的互動闖關學習遊戲，支援滑鼠、觸控與 AI 食指指尖視訊辨識控制。">
+
+  <!-- 3D 與動畫 CDN 庫 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <!-- Google MediaPipe Hands 視訊辨識函式庫 -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <!-- 3D 海底 WebGL 畫布容器 -->
+  <div id="webgl-container"></div>
+
+  <!-- 頂部高對比題目卡片 -->
+  <div id="question-card">
+    <div class="question-content">
+      <div class="question-header">
+        <span id="question-type-badge">問答 Q&A</span>
+      </div>
+      <div id="question-en">Can you swim?</div>
+      <div id="question-zh">你會游泳嗎？</div>
+    </div>
+    <!-- 語音重播按鈕 (🔊) -->
+    <button id="replay-voice-btn" title="重播題目語音" aria-label="重播語音">🔊</button>
+  </div>
+
+  <!-- 頂部 HUD 狀態儀表列 -->
+  <div id="hud-top-bar">
+    <div class="hud-group">
+      <div class="hud-item" title="生命值">
+        <span id="hud-hearts">❤️❤️❤️❤️❤️</span>
+      </div>
+      <div class="hud-item" title="累積得分">
+        <span>⭐</span>
+        <span id="hud-score">0</span>
+      </div>
+    </div>
+
+    <div class="hud-group">
+      <div class="hud-item" title="倒數時間">
+        <span>⏱️</span>
+        <span id="hud-timer">60s</span>
+      </div>
+      <div class="hud-item" title="當前關卡">
+        <span id="hud-stage">第 1 關</span>
+      </div>
+      <div class="hud-item" title="速度倍率">
+        <span id="hud-speed-badge">1× 速度</span>
+      </div>
+      <button class="hud-btn" id="hud-pause-btn" title="暫停遊戲">⏸️</button>
+      <button class="hud-btn" id="hud-settings-btn" title="遊戲設定">⚙️</button>
+    </div>
+  </div>
+
+  <!-- 畫面中央動態判定回饋橫幅 -->
+  <div id="feedback-banner" class="feedback-banner">
+    <div class="feedback-title">+100 PERFECT!</div>
+    <div class="feedback-sub">Yes, I can!</div>
+  </div>
+
+  <!-- AI 食指視訊監控子母畫面 (視訊模式時啟用) -->
+  <div id="video-preview-box">
+    <div class="video-header">
+      <span id="hand-status-badge" class="status-badge status-loading">啟動中...</span>
+    </div>
+    <video id="hand-video" playsinline></video>
+    <canvas id="hand-canvas" width="320" height="240"></canvas>
+    <button id="fallback-mouse-btn">改用游標</button>
+  </div>
+
+  <!-- 載入等待遮罩 (攝影機與 AI 辨識模型加載中) -->
+  <div id="loading-overlay" class="modal-overlay">
+    <div class="spinner"></div>
+    <div id="loading-msg" style="font-size: 1.15rem; font-weight: 700; color: #38bdf8;">
+      正在啟動攝影機並載入 AI 辨識模型...
+    </div>
+  </div>
+
+  <!-- 遊戲開始歡迎彈跳視窗 -->
+  <div id="start-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h1 class="modal-title">🌊 Mighty Fish 海底大冒險</h1>
+      <p class="modal-subtitle">帶領勇敢小魚游向迎面而來的正確答案小魚，學習 ESL 英語！</p>
+
+      <div style="background: rgba(14, 38, 64, 0.6); border: 1px solid var(--glass-border); border-radius: 16px; padding: 18px; margin-bottom: 20px; text-align: left; font-size: 0.95rem; line-height: 1.7;">
+        <p>🎯 <strong>遊戲玩法：</strong></p>
+        <p>• 觀察上方題目與聆聽題目語音，游向迎面游來的正確答案小魚。</p>
+        <p>• 碰到正確小魚會變為綠色並加分；碰到錯誤小魚會變為紅色並扣除一顆生命（共 5 顆心）。</p>
+        <p>🎮 <strong>操控規則：</strong></p>
+        <p>• <strong>指標/指尖越靠右：</strong> 魚游得越快（身形變長、顏色變為粉紅衝刺！）。</p>
+        <p>• <strong>越靠左：</strong> 魚游得越慢（最左底暫停游動，等待您思考）。</p>
+        <p>• <strong>上下移動：</strong> 控制魚的游泳高度與俯仰角度。</p>
+        <p>• 支援 <strong>滑鼠游標</strong>、<strong>觸控滑動</strong> 與 <strong>AI 食指指尖追蹤</strong>。</p>
+      </div>
+
+      <!-- 當前設定摘要卡片 -->
+      <div id="start-settings-summary" class="settings-summary-badge">
+        <span>🎮 控制模式：<strong id="summary-mode">🖱️ 滑鼠游標</strong></span>
+        <span class="summary-divider">|</span>
+        <span>⚡ 速度倍率：<strong id="summary-speed">1.0× 標準</strong></span>
+        <span class="summary-divider">|</span>
+        <span>⏱️ 挑戰時間：<strong id="summary-time">60 秒</strong></span>
+      </div>
+
+      <!-- 首頁操作按鈕組：進入設定與直接開始 -->
+      <div class="start-btn-group">
+        <button id="start-settings-btn" class="btn-secondary">
+          ⚙️ 遊戲設定 (Settings)
+        </button>
+        <button id="start-play-btn" class="btn-primary">
+          🚀 開始探險 (Start Game)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遊戲設定彈跳視窗 -->
+  <div id="settings-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2 class="modal-title" style="font-size: 1.75rem;">⚙️ 遊戲設定 (Settings)</h2>
+      <p class="modal-subtitle">客製化您的操控方式、速度倍率與挑戰時間</p>
+
+      <!-- 1. 控制模式選擇 -->
+      <div class="settings-section">
+        <label class="settings-label">🎮 控制模式 (Control Mode)</label>
+        <div class="segmented-control">
+          <button class="segment-btn control-mode-option active" data-mode="mouse">🖱️ 滑鼠游標</button>
+          <button class="segment-btn control-mode-option" data-mode="touch">📱 平板觸控</button>
+          <button class="segment-btn control-mode-option" data-mode="video">📷 食指 AI 辨識</button>
+        </div>
+      </div>
+
+      <!-- 2. 速度倍率 -->
+      <div class="settings-section">
+        <label class="settings-label">⚡ 難度與速度倍率 (Speed Multiplier)</label>
+        <div class="segmented-control">
+          <button class="segment-btn speed-option" data-speed="0.7">0.7× (悠閒慢速)</button>
+          <button class="segment-btn speed-option active" data-speed="1.0">1.0× (標準推薦)</button>
+          <button class="segment-btn speed-option" data-speed="1.3">1.3× (進階挑戰)</button>
+          <button class="segment-btn speed-option" data-speed="1.6">1.6× (極速考驗)</button>
+        </div>
+      </div>
+
+      <!-- 3. 遊戲倒數時間 -->
+      <div class="settings-section">
+        <label class="settings-label">⏱️ 挑戰倒數時間 (Time Limit)</label>
+        <div class="segmented-control">
+          <button class="segment-btn timer-option" data-time="30">30 秒</button>
+          <button class="segment-btn timer-option" data-time="45">45 秒</button>
+          <button class="segment-btn timer-option active" data-time="60">60 秒</button>
+          <button class="segment-btn timer-option" data-time="90">90 秒</button>
+          <button class="segment-btn timer-option" data-time="0">無限</button>
+        </div>
+      </div>
+
+      <!-- 設定頁操作按鈕：返回、儲存與完成設定並開始 -->
+      <div id="settings-footer-actions" class="settings-actions-group">
+        <button id="close-settings-btn" class="btn-secondary">返回首頁</button>
+        <button id="save-settings-btn" class="btn-secondary">儲存設定</button>
+        <button id="save-and-start-btn" class="btn-primary">🚀 完成設定並開始遊戲</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遊戲結束結算與排行榜彈跳視窗 -->
+  <div id="game-over-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2 class="modal-title" style="color: #ef4444; text-shadow: 0 0 14px rgba(239, 68, 68, 0.5);">🏁 冒險結算</h2>
+      <p class="modal-subtitle">探險結束！查看您的海底英勇戰績</p>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">最終得分</div>
+          <div id="final-score" class="stat-val">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">完成關卡</div>
+          <div id="final-stages" class="stat-val" style="font-size: 1.15rem; color: #38bdf8;">0 關</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">答對率</div>
+          <div id="final-accuracy" class="stat-val" style="color: #10b981;">0%</div>
+        </div>
+      </div>
+
+      <div class="name-input-group">
+        <input type="text" id="player-name-input" placeholder="輸入探險家姓名記錄排行榜" maxlength="12">
+        <button id="save-rank-btn" class="btn-primary" style="padding: 10px 18px; font-size: 0.95rem;">儲存成績</button>
+      </div>
+
+      <h3 style="font-size: 1.1rem; color: #7dd3fc; margin-top: 18px; text-align: left;">🏆 本機榮譽榜 Top 10</h3>
+      <div id="leaderboard-list"></div>
+
+      <button id="play-again-btn" class="btn-primary" style="width: 100%; margin-top: 22px;">再次挑戰 (Play Again)</button>
+    </div>
+  </div>
+
+  <!-- 應用程式各核心模組引入 (依相依順序載入) -->
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/fish.js"></script>
+  <script src="js/ocean.js"></script>
+  <script src="js/hand_tracker.js"></script>
+  <script src="js/game.js"></script>
+
+  <!-- 輔助設定頁分段按鈕點擊切換事件 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.segmented-control').forEach(container => {
+        container.addEventListener('click', (e) => {
+          const btn = e.target.closest('.segment-btn');
+          if (!btn) return;
+          container.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -204,6 +204,23 @@
     </div>
   </div>
 
+  <!-- 手機直立防護：強制旋轉橫向提示遮罩 (Orientation Lock Overlay) -->
+  <div id="orientation-lock-overlay" class="orientation-lock-overlay">
+    <div class="orientation-card">
+      <div class="rotate-phone-anim">
+        <div class="phone-frame">
+          <div class="phone-screen"></div>
+          <div class="phone-notch"></div>
+        </div>
+        <div class="rotate-arrow">🔄</div>
+      </div>
+      <h2 class="orientation-title">請旋轉手機為橫向遊玩</h2>
+      <p class="orientation-en">Please rotate device to landscape</p>
+      <p class="orientation-tip">3D 海底探險需寬螢幕視野，橫向遊玩才能獲得最佳體驗！</p>
+      <button id="btn-force-landscape" class="btn-fullscreen-landscape">📐 點此進入橫向全螢幕</button>
+    </div>
+  </div>
+
   <!-- 應用程式各核心模組引入 (依相依順序載入) -->
   <script src="js/data.js"></script>
   <script src="js/audio.js"></script>

@@ -54,6 +54,10 @@ class OceanScene {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.container.appendChild(this.renderer.domElement);
 
+    // 視窗縮放自適應監聽
+    window.addEventListener('resize', () => this.onResize());
+    window.addEventListener('orientationchange', () => setTimeout(() => this.onResize(), 150));
+
     // 4. 光照配置 (呈現深海光斑與高對比立體感)
     this.setupLights();
 
@@ -70,6 +74,17 @@ class OceanScene {
 
     // 8. 視窗縮放監聽
     window.addEventListener('resize', () => this.onWindowResize());
+    window.addEventListener('orientationchange', () => setTimeout(() => this.onWindowResize(), 150));
+  }
+
+  onWindowResize() {
+    const width = this.container.clientWidth || window.innerWidth;
+    const height = this.container.clientHeight || window.innerHeight;
+    if (this.camera && this.renderer) {
+      this.camera.aspect = width / height;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(width, height);
+    }
   }
 
   setupLights() {

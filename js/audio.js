@@ -221,78 +221,9 @@ class FishAudioController {
     this.stopVoice();
 
     const clean = text.trim();
+    const map = window.SENTENCES_AUDIO_MAP || this._audioMap || {};
+    const audioPath = map[clean] || map[clean.replace(/,\s*/g, ' ')];
 
-    // 取得預先合成之音檔映射
-    if (!this._audioMap) {
-      this._audioMap = {
-        "Can the fish swim?": "assets/audios/tts/fish_q_0_471140c9.mp3",
-        "Can the rabbit soar?": "assets/audios/tts/fish_q_1_3525a6ee.mp3",
-        "Can the frog jump?": "assets/audios/tts/fish_q_2_e5629d65.mp3",
-        "Can the rooster climb?": "assets/audios/tts/fish_q_3_590a5ffd.mp3",
-        "Can the horse hop?": "assets/audios/tts/fish_q_4_afc922ac.mp3",
-        "Can the eagle soar?": "assets/audios/tts/fish_q_5_1451f627.mp3",
-        "Can you swim like a fish?": "assets/audios/tts/fish_q_6_3116249f.mp3",
-        "Can you fly like an owl?": "assets/audios/tts/fish_q_7_f6645683.mp3",
-        "Kim has a fish. The fish can swim.": "assets/audios/tts/fish_q_8_bf988ec1.mp3",
-        "Diego has a dog. The dog can run.": "assets/audios/tts/fish_q_9_a6e0fa9d.mp3",
-        "Josh has a frog. The frog can jump.": "assets/audios/tts/fish_q_10_ee898c42.mp3",
-        "Ted has a rabbit. The rabbit can hop.": "assets/audios/tts/fish_q_11_a728c2d6.mp3",
-        "Zac has a duck. The duck can walk.": "assets/audios/tts/fish_q_12_c0a9589b.mp3",
-        "Paul has an owl. The owl can fly.": "assets/audios/tts/fish_q_13_4b6345a4.mp3",
-        "Which word begins with Ff?": "assets/audios/tts/fish_q_14_df26cd7a.mp3",
-        "Which word begins with Dd?": "assets/audios/tts/fish_q_15_c3b2467a.mp3",
-        "Which word begins with Rr?": "assets/audios/tts/fish_q_16_885e3837.mp3",
-        "Which word begins with Hh?": "assets/audios/tts/fish_q_17_996a745d.mp3",
-        "Which word begins with Ss?": "assets/audios/tts/fish_q_18_0adb0cd4.mp3",
-        "Which word begins with Jj?": "assets/audios/tts/fish_q_19_493d82c4.mp3",
-        "Which word begins with Kk?": "assets/audios/tts/fish_q_20_dd0ff653.mp3",
-        "walk": "assets/audios/tts/fish_opt_46f96315.mp3",
-        "sun": "assets/audios/tts/fish_opt_ebd556e6.mp3",
-        "fish": "assets/audios/tts/fish_opt_83e4a96a.mp3",
-        "sing": "assets/audios/tts/fish_opt_db853ec3.mp3",
-        "swim": "assets/audios/tts/fish_opt_539125fd.mp3",
-        "climb": "assets/audios/tts/fish_opt_28b3da6a.mp3",
-        "dance": "assets/audios/tts/fish_opt_3355d92c.mp3",
-        "dish": "assets/audios/tts/fish_opt_d51f95cd.mp3",
-        "hop": "assets/audios/tts/fish_opt_5f67b284.mp3",
-        "foot": "assets/audios/tts/fish_opt_d8735f74.mp3",
-        "frog": "assets/audios/tts/fish_opt_938c2cc0.mp3",
-        "hat": "assets/audios/tts/fish_opt_46b5e59b.mp3",
-        "rabbit": "assets/audios/tts/fish_opt_a51e47f6.mp3",
-        "it swim.": "assets/audios/tts/fish_opt_5aa154ce.mp3",
-        "I walk.": "assets/audios/tts/fish_opt_3d4bd5ab.mp3",
-        "duck": "assets/audios/tts/fish_opt_36846677.mp3",
-        "day": "assets/audios/tts/fish_opt_628b7db0.mp3",
-        "I can't.": "assets/audios/tts/fish_opt_325e73b1.mp3",
-        "face": "assets/audios/tts/fish_opt_d5ca3224.mp3",
-        "jump": "assets/audios/tts/fish_opt_ba535ef5.mp3",
-        "it hop.": "assets/audios/tts/fish_opt_1d260211.mp3",
-        "dog": "assets/audios/tts/fish_opt_06d80eb0.mp3",
-        "No": "assets/audios/tts/fish_opt_bafd7322.mp3",
-        "fly": "assets/audios/tts/fish_opt_af17bc3b.mp3",
-        "it run.": "assets/audios/tts/fish_opt_173c981a.mp3",
-        "I can.": "assets/audios/tts/fish_opt_34fcead7.mp3",
-        "Yes": "assets/audios/tts/fish_opt_93cba074.mp3",
-        "horse": "assets/audios/tts/fish_opt_f1bdf5ed.mp3",
-        "red": "assets/audios/tts/fish_opt_bda9643a.mp3",
-        "kite": "assets/audios/tts/fish_opt_4781ac92.mp3",
-        "it fly.": "assets/audios/tts/fish_opt_c62d88b9.mp3",
-        "it soar.": "assets/audios/tts/fish_opt_41c0103b.mp3",
-        "run": "assets/audios/tts/fish_opt_a53108f7.mp3",
-        "soar": "assets/audios/tts/fish_opt_fafb0bd4.mp3",
-        "it can.": "assets/audios/tts/fish_opt_3527b362.mp3",
-        "I fly.": "assets/audios/tts/fish_opt_f231cf0f.mp3",
-        "kiss": "assets/audios/tts/fish_opt_4188679c.mp3",
-        "it can't.": "assets/audios/tts/fish_opt_5483eef4.mp3",
-        "juice": "assets/audios/tts/fish_opt_57f7e96f.mp3",
-        "Yes, it can.": "assets/audios/tts/fish_opt_3527b362.mp3",
-        "No, it can't.": "assets/audios/tts/fish_opt_5483eef4.mp3",
-        "Yes, I can.": "assets/audios/tts/fish_opt_34fcead7.mp3",
-        "No, I can't.": "assets/audios/tts/fish_opt_325e73b1.mp3"
-      };
-    }
-
-    const audioPath = this._audioMap[clean] || this._audioMap[clean.replace(/,\s*/g, ' ')];
     if (audioPath) {
       this.currentAudio = new Audio(audioPath);
       this.currentAudio.onended = () => { if (onSuccess) onSuccess(); };
@@ -305,7 +236,8 @@ class FishAudioController {
       });
     } else {
       // 嘗試找 flashcard 音檔
-      const fb = `P1_flashcards_audios/P1_${clean.toLowerCase()}.mp3`;
+      const book = window.BOOK_ID || "P1";
+      const fb = book + "_flashcards_audios/" + book + "_" + clean.toLowerCase() + ".mp3";
       this.playAudioFile(fb, onSuccess);
     }
   }

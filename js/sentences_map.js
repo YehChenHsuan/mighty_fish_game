@@ -1,4 +1,4 @@
-{
+window.SENTENCES_AUDIO_MAP = {
   "Can the fish swim?": "assets/audios/tts/fish_q_0_471140c9.mp3",
   "Yes, it can.": "assets/audios/tts/fish_opt_9635b401.mp3",
   "No, it can't.": "assets/audios/tts/fish_opt_9dcd6713.mp3",
@@ -16,4 +16,4 @@
   "Which word begins with Dd?": "assets/audios/tts/fish_q_5_c3b2467a.mp3",
   "hat": "assets/audios/tts/fish_opt_46b5e59b.mp3",
   "kite": "assets/audios/tts/fish_opt_4781ac92.mp3"
-}
+};
